@@ -36,5 +36,18 @@ COPY banner /etc/ssh/banner
 # Expose SSH on port 2222 (non-standard port - students must discover this)
 EXPOSE 2222
 
+# Install python3 + iptables for port knocking
+RUN apt-get update && \
+    apt-get install -y python3 iptables && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY knock_server.py /app/knock_server.py
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Start SSH + port knocking
+CMD ["/start.sh"]
+
 # Start SSH server
-CMD ["/usr/sbin/sshd", "-D", "-p", "2222"]
+# CMD ["/usr/sbin/sshd", "-D", "-p", "2222"]

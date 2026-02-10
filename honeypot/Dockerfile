@@ -4,6 +4,11 @@ WORKDIR /app
 
 COPY honeypot.py .
 
+RUN pip install --no-cache-dir paramiko
+
+COPY honeypot.py .
+COPY logger.py .
+
 # Create logs directory
 RUN mkdir -p /app/logs
 

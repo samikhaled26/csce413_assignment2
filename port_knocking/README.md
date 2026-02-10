@@ -1,22 +1,48 @@
-## Port Knocking Starter Template
+# Port Knocking Implementation
 
-This directory is a starter template for the port knocking portion of the assignment.
+## Purpose
+This component implements a port knocking system to protect the hidden SSH service running on port **2222**.  
+The SSH port remains closed by default and only opens after a correct knock sequence.
 
-### What you need to implement
-- Pick a protected service/port (default is 2222).
-- Define a knock sequence (e.g., 1234, 5678, 9012).
-- Implement a server that listens for knocks and validates the sequence.
-- Open the protected port only after a valid sequence.
-- Add timing constraints and reset on incorrect sequences.
-- Implement a client to send the knock sequence.
+## Design
 
-### Getting started
-1. Implement your server logic in `knock_server.py`.
-2. Implement your client logic in `knock_client.py`.
-3. Update `demo.sh` to demonstrate your flow.
-4. Run from the repo root with `docker compose up port_knocking`.
+- **Protected Service:** SSH on port 2222  
+- **Knock Sequence:** 1234 → 5678 → 9012  
+- **Time Window:** 10 seconds  
+- **Auto-Close Time:** 30 seconds  
 
-### Example usage
-```bash
-python3 knock_client.py --target 172.20.0.40 --sequence 1234,5678,9012
-```
+### Components
+
+- **knock_server.py**
+  - Listens on knock ports  
+  - Tracks knock progress per IP  
+  - Verifies correct sequence and timing  
+  - Uses iptables to open port 2222 only for the authorized IP  
+
+- **knock_client.py**
+  - Sends knock sequence to the target host  
+  - Allows connection to SSH after successful knocking  
+
+- **Dockerfile**
+  - Runs the server with NET_ADMIN capability to modify firewall rules  
+
+## How It Works
+
+1. Port 2222 is blocked by default using iptables.  
+2. Client performs the knock sequence.  
+3. If the sequence is correct and within the time window, the server opens port 2222 for that IP.  
+4. Access is granted temporarily and automatically closed after timeout.
+
+## Usage
+
+Before knocking (should fail):
+
+ssh sshuser@<target_ip> -p 2222
+
+Perform knock sequence:
+
+python3 knock_client.py --target <target_ip> --sequence 1234,5678,9012
+
+After knocking (should succeed):
+
+ssh sshuser@<target_ip> -p 2222
